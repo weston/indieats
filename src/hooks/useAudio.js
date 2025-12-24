@@ -26,6 +26,40 @@ export function useAudio() {
   const quackBufferRef = useRef(null)
   const munchBufferRef = useRef(null)
   const audioLoadedRef = useRef(false)
+  const silenceAudioRef = useRef(null)
+
+  // Load and loop silence audio to keep audio unlocked on mobile
+  useEffect(() => {
+    const silenceAudio = new Audio('/silence.mp3')
+    silenceAudio.loop = true
+    silenceAudio.volume = 0.01 // Very quiet
+    silenceAudio.preload = 'auto'
+    silenceAudioRef.current = silenceAudio
+
+    // Start playing on first user interaction
+    const startSilence = () => {
+      if (silenceAudioRef.current) {
+        silenceAudioRef.current.play().catch(() => {
+          // Ignore errors
+        })
+      }
+      // Remove listeners after first interaction
+      document.removeEventListener('touchstart', startSilence)
+      document.removeEventListener('click', startSilence)
+    }
+
+    document.addEventListener('touchstart', startSilence, { once: true })
+    document.addEventListener('click', startSilence, { once: true })
+
+    return () => {
+      document.removeEventListener('touchstart', startSilence)
+      document.removeEventListener('click', startSilence)
+      if (silenceAudioRef.current) {
+        silenceAudioRef.current.pause()
+        silenceAudioRef.current = null
+      }
+    }
+  }, [])
 
   // Load the quack MP3 file
   useEffect(() => {
@@ -71,16 +105,23 @@ export function useAudio() {
     if (unlockedRef.current) return
 
     try {
-      // Unlock HTML5 Audio by playing it silently (required for iOS)
+      // Unlock HTML5 Audio by playing it (required for iOS)
       if (quackAudioRef.current) {
         try {
           const audio = quackAudioRef.current
-          audio.muted = true
+          audio.volume = 1.0 // Set to full volume
           audio.currentTime = 0
-          await audio.play()
-          audio.pause()
-          audio.currentTime = 0
-          audio.muted = false
+          const playPromise = audio.play()
+
+          // Let it play briefly then pause
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              audio.pause()
+              audio.currentTime = 0
+            }).catch(() => {
+              // Ignore unlock errors
+            })
+          }
         } catch (e) {
           // Unlock failed, but continue
         }
@@ -123,12 +164,14 @@ export function useAudio() {
           // Stop current playback if any
           audio.pause()
           audio.currentTime = 0
+          audio.volume = 1.0
 
           // Play the sound
-          try {
-            await audio.play()
-          } catch (err) {
-            // Ignore play errors - they happen sometimes on mobile
+          const playPromise = audio.play()
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {
+              // Silently handle play failures
+            })
           }
         }
       } else if (soundType === 'munch') {
