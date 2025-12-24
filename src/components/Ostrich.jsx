@@ -353,20 +353,46 @@ function Ostrich({ state, reducedMotion, onMouthPosition }) {
         <ellipse cx="96" cy="80" rx="5" ry="8" fill="#E8E8E8" opacity="0.25" />
         <ellipse cx="104" cy="90" rx="5" ry="8" fill="#E8E8E8" opacity="0.25" />
 
-        {/* SMALL, FLAT HEAD - OSTRICH CHARACTERISTIC (but still cute) */}
-        {/* Base head shape - small and flat like real ostrich */}
+        {/* SMALL, FLAT-TOP HEAD - OSTRICH CHARACTERISTIC (but still cute) */}
+        {/* Base head shape - rounded but with flatter top */}
+        {/* Deep shadow for 3D depth */}
+        <ellipse cx="98" cy="17" rx="30" ry="24" fill="#A0A0A0" opacity="0.4" />
+        <ellipse cx="97" cy="18" rx="28" ry="22" fill="#909090" opacity="0.3" />
+        {/* Main head shape - wider ellipse, naturally rounded */}
         <ellipse
           cx="100"
           cy="15"
-          rx="28"
-          ry="22"
+          rx="30"
+          ry="24"
           fill="url(#headFeatherGradient)"
           className="head"
         />
-        {/* Head shadow and highlight */}
-        <ellipse cx="99" cy="16" rx="26" ry="20" fill="#B0B0B0" opacity="0.3" />
-        <ellipse cx="101" cy="13" rx="24" ry="18" fill="#F8F8F8" opacity="0.5" />
-        <ellipse cx="100" cy="15" rx="27" ry="21" fill="none" stroke="#E8E8E8" strokeWidth="1" opacity="0.4" />
+        {/* Overlay to flatten the top slightly */}
+        <path
+          d="M 70 3 Q 70 3, 100 3 Q 130 3, 130 3 L 130 8 Q 130 10, 128 12 Q 100 14, 72 12 Q 70 10, 70 8 Z"
+          fill="url(#headFeatherGradient)"
+          opacity="0.95"
+        />
+        {/* Side shadow for 3D effect */}
+        <ellipse cx="96" cy="16" rx="28" ry="20" fill="#B0B0B0" opacity="0.35" />
+        <ellipse cx="94" cy="17" rx="26" ry="18" fill="#A0A0A0" opacity="0.25" />
+        {/* Top highlight for flat top effect */}
+        <path
+          d="M 72 3 Q 100 3, 128 3 L 127 6 Q 127 8, 125 10 Q 100 11, 75 10 Q 73 8, 73 6 Z"
+          fill="#F8F8F8"
+          opacity="0.6"
+        />
+        <path
+          d="M 75 4 Q 100 4, 125 4 L 124 6 Q 124 7, 123 8 Q 100 9, 77 8 Q 76 7, 76 6 Z"
+          fill="#FFFFFF"
+          opacity="0.4"
+        />
+        {/* Rim lighting for 3D depth */}
+        <ellipse cx="100" cy="15" rx="29" ry="23" fill="none" stroke="#E8E8E8" strokeWidth="1.5" opacity="0.5" />
+        <ellipse cx="100" cy="15" rx="27" ry="21" fill="none" stroke="#F0F0F0" strokeWidth="1" opacity="0.3" />
+        {/* Additional depth layers */}
+        <ellipse cx="103" cy="13" rx="26" ry="19" fill="#F5F5F5" opacity="0.4" />
+        <ellipse cx="97" cy="16" rx="29" ry="21" fill="#D0D0D0" opacity="0.2" />
 
         {/* MAJOR FEATHER GROUPS - Top crown feathers (spiky) */}
         {/* Large primary crown feathers */}
