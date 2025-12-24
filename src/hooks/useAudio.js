@@ -26,40 +26,6 @@ export function useAudio() {
   const quackBufferRef = useRef(null)
   const munchBufferRef = useRef(null)
   const audioLoadedRef = useRef(false)
-  const silenceAudioRef = useRef(null)
-
-  // Load and loop silence audio to keep audio unlocked on mobile
-  useEffect(() => {
-    const silenceAudio = new Audio('/silence.mp3')
-    silenceAudio.loop = true
-    silenceAudio.volume = 0.01 // Very quiet
-    silenceAudio.preload = 'auto'
-    silenceAudioRef.current = silenceAudio
-
-    // Start playing on first user interaction
-    const startSilence = () => {
-      if (silenceAudioRef.current) {
-        silenceAudioRef.current.play().catch(() => {
-          // Ignore errors
-        })
-      }
-      // Remove listeners after first interaction
-      document.removeEventListener('touchstart', startSilence)
-      document.removeEventListener('click', startSilence)
-    }
-
-    document.addEventListener('touchstart', startSilence, { once: true })
-    document.addEventListener('click', startSilence, { once: true })
-
-    return () => {
-      document.removeEventListener('touchstart', startSilence)
-      document.removeEventListener('click', startSilence)
-      if (silenceAudioRef.current) {
-        silenceAudioRef.current.pause()
-        silenceAudioRef.current = null
-      }
-    }
-  }, [])
 
   // Load the quack MP3 file
   useEffect(() => {
@@ -105,55 +71,59 @@ export function useAudio() {
     if (unlockedRef.current) return
 
     try {
-      // Unlock HTML5 Audio by playing it (required for iOS)
-      if (quackAudioRef.current) {
-        try {
-          const audio = quackAudioRef.current
-          audio.volume = 1.0 // Set to full volume
-          audio.currentTime = 0
-          const playPromise = audio.play()
-
-          // Let it play briefly then pause
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              audio.pause()
-              audio.currentTime = 0
-            }).catch(() => {
-              // Ignore unlock errors
-            })
-          }
-        } catch (e) {
-          // Unlock failed, but continue
-        }
-      }
-
-      // Also set up Web Audio API for munch sounds
+      // Step 1: Create/resume AudioContext IMMEDIATELY (critical for iOS)
       const AudioContext = window.AudioContext || window.webkitAudioContext
       if (AudioContext) {
         if (!audioContextRef.current) {
           audioContextRef.current = new AudioContext()
         }
 
+        // Resume immediately - don't await anything before this!
         if (audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume()
         }
 
+        // Step 2: Play a tiny silent buffer to fully unlock iOS
+        try {
+          const silentBuffer = audioContextRef.current.createBuffer(1, 1, 22050)
+          const source = audioContextRef.current.createBufferSource()
+          source.buffer = silentBuffer
+          source.connect(audioContextRef.current.destination)
+          source.start(0)
+        } catch (e) {
+          // Silent buffer failed, but continue
+        }
+
+        // Generate munch sound buffer
         munchBufferRef.current = generateMunchSound(audioContextRef.current)
       }
 
+      // Step 3: Also unlock HTML5 Audio as fallback
+      if (quackAudioRef.current) {
+        try {
+          const audio = quackAudioRef.current
+          audio.volume = 1.0
+          audio.currentTime = 0
+          // Play and immediately pause to unlock
+          await audio.play()
+          audio.pause()
+          audio.currentTime = 0
+        } catch (e) {
+          // HTML5 unlock failed, but continue
+        }
+      }
+
       unlockedRef.current = true
+      return true
     } catch (e) {
-      unlockedRef.current = true // Mark as unlocked even if it failed
+      unlockedRef.current = false
+      return false
     }
   }, [])
 
   const playSound = useCallback(async (soundType) => {
     if (muted) return
-
-    // Ensure audio is unlocked first
-    if (!unlockedRef.current) {
-      await unlockAudio()
-    }
+    if (!unlockedRef.current) return // Don't play if not unlocked
 
     try {
       if (soundType === 'quack') {

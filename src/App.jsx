@@ -3,6 +3,7 @@ import Ostrich from './components/Ostrich'
 import FoodItem from './components/FoodItem'
 import Sparkles from './components/Sparkles'
 import MuteToggle from './components/MuteToggle'
+import StartScreen from './components/StartScreen'
 import { useAudio } from './hooks/useAudio'
 import { useReducedMotion } from './hooks/useReducedMotion'
 import './App.css'
@@ -22,6 +23,7 @@ const ANTICIPATION_RADIUS = 12 // vh
 const EAT_RADIUS = 8 // vh
 
 function App() {
+  const [showStartScreen, setShowStartScreen] = useState(true)
   const [foodItems, setFoodItems] = useState([])
   const [sparkles, setSparkles] = useState([])
   const [ostrichState, setOstrichState] = useState('idle')
@@ -34,6 +36,38 @@ function App() {
   const mouthPositionRef = useRef({ x: 0, y: 0 })
   const ostrichStateRef = useRef('idle')
   const handleEatFoodRef = useRef(null)
+  const gameStartedRef = useRef(false)
+
+  // Handle start button click
+  const handleStart = useCallback(async () => {
+    // Unlock audio immediately in this click handler
+    const success = await unlockAudio()
+
+    // Reset spawn timer so food starts falling immediately
+    lastSpawnRef.current = Date.now() - (SPAWN_INTERVAL * 2)
+
+    // Spawn initial food immediately
+    const initialFood = []
+    for (let i = 0; i < 2; i++) {
+      const type = FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)]
+      initialFood.push({
+        id: foodIdRef.current++,
+        type,
+        x: Math.random() * 80 + 10,
+        y: -10 - (i * 20),
+        velocity: FALL_SPEED,
+        state: 'falling',
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 2,
+      })
+    }
+    setFoodItems(initialFood)
+
+    // Mark game as started
+    gameStartedRef.current = true
+    // Hide start screen to start the game
+    setShowStartScreen(false)
+  }, [unlockAudio])
 
   // Handle food eaten (called from game loop, food already removed from array)
   const handleEatFood = useCallback((foodId) => {
@@ -174,10 +208,13 @@ function App() {
     const loop = () => {
       if (!isActive) return
 
-      try {
-        updateGameRef.current()
-      } catch (error) {
-        console.error('Game loop error:', error)
+      // Only run game logic if game has started
+      if (gameStartedRef.current) {
+        try {
+          updateGameRef.current()
+        } catch (error) {
+          console.error('Game loop error:', error)
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(loop)
@@ -191,7 +228,7 @@ function App() {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, []) // Only run once on mount
+  }, []) // Run once on mount
 
   // Update mouth position when ostrich renders
   const handleMouthPosition = useCallback((x, y) => {
@@ -200,12 +237,10 @@ function App() {
 
   // Handle food drag start
   const handleDragStart = useCallback((foodId) => {
-    // Unlock audio on first interaction to ensure sounds can play
-    unlockAudio()
-    setFoodItems(prev => prev.map(f => 
+    setFoodItems(prev => prev.map(f =>
       f.id === foodId ? { ...f, state: 'dragging', dragging: true } : f
     ))
-  }, [unlockAudio])
+  }, [])
 
   // Handle food drag
   const handleDrag = useCallback((foodId, x, y) => {
@@ -274,17 +309,19 @@ function App() {
 
   return (
     <div className="app" ref={gameRef}>
+      {showStartScreen && <StartScreen onStart={handleStart} />}
+
       <div className="background">
         <div className="sky" />
         <div className="ground" />
       </div>
-      
-      <Ostrich 
-        state={ostrichState} 
+
+      <Ostrich
+        state={ostrichState}
         reducedMotion={reducedMotion}
         onMouthPosition={handleMouthPosition}
       />
-      
+
       {foodItems.map(food => (
         <FoodItem
           key={food.id}
@@ -294,11 +331,11 @@ function App() {
           onDragEnd={handleDragEnd}
         />
       ))}
-      
+
       {sparkles.map(sparkle => (
         <Sparkles key={sparkle.id} x={sparkle.x} y={sparkle.y} />
       ))}
-      
+
       <MuteToggle muted={muted} onToggle={toggleMute} />
     </div>
   )
