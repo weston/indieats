@@ -41,48 +41,42 @@
   }
 }
 
-/* Anticipation state - no head expansion, just mouth opening */
+/* Anticipation state - mouth opening animation */
 
-/* Lower beak group drops WAY down to create VERY visible gap */
-.ostrich-container.anticipation .beak-lower-group {
-  transform-origin: 50% 0%;
-  animation: openBeakLower 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* Upper beak rotates up from hinge point at back */
+.ostrich-container.anticipation .beak-upper-group {
+  transform-origin: 100px 55px;
+  animation: openBeakUpper 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.ostrich-container.happy .beak-lower-group {
-  transform-origin: 50% 0%;
-  animation: openBeakLowerHappy 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+@keyframes openBeakUpper {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-12deg);
+  }
+}
+
+/* Lower beak rotates down from hinge point at back */
+.ostrich-container.anticipation .beak-lower-group {
+  transform-origin: 100px 58px;
+  animation: openBeakLower 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes openBeakLower {
   0% {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
-    transform: translateY(16px) rotate(5deg);
+    transform: rotate(15deg);
   }
 }
 
-@keyframes openBeakLowerHappy {
-  0% {
-    transform: translateY(16px) rotate(5deg);
-  }
-  30% {
-    transform: translateY(18px) rotate(7deg);
-  }
-  60% {
-    transform: translateY(17px) rotate(6deg);
-  }
-  100% {
-    transform: translateY(16px) rotate(5deg);
-  }
-}
-
-/* Mouth interior appears instantly in the gap when opening */
-.ostrich-container.anticipation .mouth-interior,
-.ostrich-container.happy .mouth-interior {
-  animation: showMouth 0.3s ease-out forwards;
-  filter: drop-shadow(0 2px 4px rgba(255, 68, 68, 0.5));
+/* Mouth interior appears with fade animation */
+.ostrich-container.anticipation .mouth-interior {
+  animation: showMouth 0.35s ease-out forwards;
+  filter: drop-shadow(0 2px 6px rgba(255, 68, 68, 0.6));
 }
 
 @keyframes showMouth {
@@ -91,6 +85,20 @@
   }
   100% {
     opacity: 1;
+  }
+}
+
+/* Head tilts slightly when mouth opens */
+.ostrich-container.anticipation .head {
+  animation: headTiltAnticipation 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes headTiltAnticipation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(2deg);
   }
 }
 
