@@ -136,15 +136,11 @@ export function useAudio() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
         if (isMobile) {
-          // On mobile, use the original audio element directly
+          // On mobile, clone the audio element for each play to avoid state issues
           if (quackAudioRef.current) {
             try {
-              const audio = quackAudioRef.current
-              // Stop any currently playing audio
-              audio.pause()
-              audio.currentTime = 0
-              // Load the audio to ensure it's ready to play again
-              audio.load()
+              // Clone the audio element to get a fresh instance
+              const audio = quackAudioRef.current.cloneNode(true)
               audio.volume = 1.0
               const playPromise = audio.play()
               if (playPromise !== undefined) {
@@ -178,10 +174,8 @@ export function useAudio() {
 
         // Fallback: HTML5 Audio (works on both mobile and desktop)
         if (quackAudioRef.current) {
-          const audio = quackAudioRef.current
-          audio.pause()
-          audio.currentTime = 0
-          audio.load()
+          // Clone the audio element to get a fresh instance
+          const audio = quackAudioRef.current.cloneNode(true)
           audio.volume = 1.0
           const playPromise = audio.play()
           if (playPromise !== undefined) {
