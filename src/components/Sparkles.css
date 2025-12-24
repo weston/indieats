@@ -1,0 +1,181 @@
+.sparkles-container {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #FFD700;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #FFD700, 0 0 12px #FFA500;
+  animation: sparklePop 1s ease-out forwards;
+  animation-delay: var(--delay);
+  transform: translate(-50%, -50%);
+}
+
+/* Create 8 different sparkle animations for different angles */
+.sparkle:nth-child(1) {
+  animation: sparklePop1 1s ease-out forwards;
+  animation-delay: 0s;
+}
+
+.sparkle:nth-child(2) {
+  animation: sparklePop2 1s ease-out forwards;
+  animation-delay: 0.05s;
+}
+
+.sparkle:nth-child(3) {
+  animation: sparklePop3 1s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+.sparkle:nth-child(4) {
+  animation: sparklePop4 1s ease-out forwards;
+  animation-delay: 0.15s;
+}
+
+.sparkle:nth-child(5) {
+  animation: sparklePop5 1s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.sparkle:nth-child(6) {
+  animation: sparklePop6 1s ease-out forwards;
+  animation-delay: 0.25s;
+}
+
+.sparkle:nth-child(7) {
+  animation: sparklePop7 1s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.sparkle:nth-child(8) {
+  animation: sparklePop8 1s ease-out forwards;
+  animation-delay: 0.35s;
+}
+
+@keyframes sparklePop1 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + 60px), -50%) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop2 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + 42px), calc(-50% - 42px)) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop3 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 60px)) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop4 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% - 42px), calc(-50% - 42px)) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop5 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% - 60px), -50%) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop6 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% - 42px), calc(-50% + 42px)) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop7 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 60px)) scale(0) rotate(360deg);
+  }
+}
+
+@keyframes sparklePop8 {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + 42px), calc(-50% + 42px)) scale(0) rotate(360deg);
+  }
+}
+
