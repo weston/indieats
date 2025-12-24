@@ -136,21 +136,30 @@ export function useAudio() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
         if (isMobile) {
-          // On mobile, clone the audio element for each play to avoid state issues
-          if (quackAudioRef.current) {
-            try {
-              // Clone the audio element to get a fresh instance
-              const audio = quackAudioRef.current.cloneNode(true)
-              audio.volume = 1.0
-              const playPromise = audio.play()
-              if (playPromise !== undefined) {
-                await playPromise
-              }
-              return
-            } catch (e) {
-              console.warn('HTML5 Audio playback failed:', e)
-              // Fall through to Web Audio API
+          // On mobile, create a fresh Audio element each time
+          try {
+            // Create a completely new Audio element for each play
+            const audio = new Audio('/quack.mp3')
+            audio.volume = 1.0
+
+            // Clean up the audio element after it finishes playing
+            audio.addEventListener('ended', () => {
+              audio.remove()
+            })
+
+            // Also clean up on error
+            audio.addEventListener('error', () => {
+              audio.remove()
+            })
+
+            const playPromise = audio.play()
+            if (playPromise !== undefined) {
+              await playPromise
             }
+            return
+          } catch (e) {
+            console.warn('HTML5 Audio playback failed:', e)
+            // Fall through to Web Audio API
           }
         } else {
           // On desktop, try Web Audio API first
@@ -173,14 +182,23 @@ export function useAudio() {
         }
 
         // Fallback: HTML5 Audio (works on both mobile and desktop)
-        if (quackAudioRef.current) {
-          // Clone the audio element to get a fresh instance
-          const audio = quackAudioRef.current.cloneNode(true)
-          audio.volume = 1.0
-          const playPromise = audio.play()
-          if (playPromise !== undefined) {
-            await playPromise
-          }
+        // Create a fresh Audio element for each play
+        const audio = new Audio('/quack.mp3')
+        audio.volume = 1.0
+
+        // Clean up the audio element after it finishes playing
+        audio.addEventListener('ended', () => {
+          audio.remove()
+        })
+
+        // Also clean up on error
+        audio.addEventListener('error', () => {
+          audio.remove()
+        })
+
+        const playPromise = audio.play()
+        if (playPromise !== undefined) {
+          await playPromise
         }
       } else if (soundType === 'munch') {
         if (!audioContextRef.current || !munchBufferRef.current) return
