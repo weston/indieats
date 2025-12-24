@@ -38,11 +38,19 @@ function App() {
   // Handle food eaten (called from game loop, food already removed from array)
   const handleEatFood = useCallback((foodId) => {
     // Don't remove food here - it's already removed in the game loop
+    
+    // Always play quack sound when ostrich eats
     playSound('quack')
     
-    // Close mouth immediately when food disappears
-    setOstrichState('idle')
-    ostrichStateRef.current = 'idle'
+    // Set to happy state to trigger bounce animation
+    setOstrichState('happy')
+    ostrichStateRef.current = 'happy'
+    
+    // After bounce animation completes (0.7s), return to idle
+    setTimeout(() => {
+      setOstrichState('idle')
+      ostrichStateRef.current = 'idle'
+    }, 700)
   }, [playSound])
 
   // Store ref to handleEatFood for game loop
@@ -139,7 +147,7 @@ function App() {
         updated = [...updated, newFood]
       }
 
-      // Update ostrich state
+      // Update ostrich state (but don't interfere with happy state)
       const currentState = ostrichStateRef.current
       if (hasNearbyFood && currentState !== 'anticipation' && currentState !== 'happy') {
         setOstrichState('anticipation')
@@ -148,6 +156,7 @@ function App() {
         setOstrichState('idle')
         ostrichStateRef.current = 'idle'
       }
+      // Don't change state if it's 'happy' - let the timeout in handleEatFood handle it
 
       return updated
     })
@@ -191,6 +200,7 @@ function App() {
 
   // Handle food drag start
   const handleDragStart = useCallback((foodId) => {
+    // Unlock audio on first interaction to ensure sounds can play
     unlockAudio()
     setFoodItems(prev => prev.map(f => 
       f.id === foodId ? { ...f, state: 'dragging', dragging: true } : f
@@ -243,11 +253,8 @@ function App() {
         return updated
       })
       
-      // Close mouth immediately when food is released near ostrich
-      setOstrichState('idle')
-      ostrichStateRef.current = 'idle'
-      
-      // Trigger effects (sound, sparkles)
+      // Trigger effects (sound, happy bounce animation)
+      // handleEatFood will set state to 'happy' and then 'idle' after animation
       handleEatFood(foodId)
     } else {
       // Not close enough - drop it gently
