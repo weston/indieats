@@ -139,9 +139,14 @@ export function useAudio() {
           // On mobile, use the original audio element directly
           if (quackAudioRef.current) {
             try {
-              quackAudioRef.current.volume = 1.0
-              quackAudioRef.current.currentTime = 0
-              const playPromise = quackAudioRef.current.play()
+              const audio = quackAudioRef.current
+              // Stop any currently playing audio
+              audio.pause()
+              audio.currentTime = 0
+              // Load the audio to ensure it's ready to play again
+              audio.load()
+              audio.volume = 1.0
+              const playPromise = audio.play()
               if (playPromise !== undefined) {
                 await playPromise
               }
@@ -173,9 +178,12 @@ export function useAudio() {
 
         // Fallback: HTML5 Audio (works on both mobile and desktop)
         if (quackAudioRef.current) {
-          quackAudioRef.current.volume = 1.0
-          quackAudioRef.current.currentTime = 0
-          const playPromise = quackAudioRef.current.play()
+          const audio = quackAudioRef.current
+          audio.pause()
+          audio.currentTime = 0
+          audio.load()
+          audio.volume = 1.0
+          const playPromise = audio.play()
           if (playPromise !== undefined) {
             await playPromise
           }

@@ -15,8 +15,8 @@ const FOOD_TYPES = [
   { id: 'apple', color: '#FF6B6B', shape: 'circle' },
 ]
 
-const MAX_FOOD_ITEMS = 8
-const SPAWN_INTERVAL = 2000 // 2 seconds
+const MAX_FOOD_ITEMS = 2
+const SPAWN_INTERVAL = 4000 // 4 seconds
 const FALL_SPEED = 0.25 // vh per frame (half speed)
 const ANTICIPATION_RADIUS = 12 // vh
 const EAT_RADIUS = 8 // vh
