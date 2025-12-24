@@ -71,53 +71,37 @@ export function useAudio() {
     if (unlockedRef.current) return
 
     try {
-      // First, unlock HTML5 Audio by playing it (required for iOS)
+      // Unlock HTML5 Audio by playing it silently (required for iOS)
       if (quackAudioRef.current) {
         try {
-          quackAudioRef.current.volume = 0.01 // Very quiet but not silent
-          quackAudioRef.current.currentTime = 0
-          const playPromise = quackAudioRef.current.play()
-          if (playPromise !== undefined) {
-            await playPromise
-            quackAudioRef.current.pause()
-            quackAudioRef.current.currentTime = 0
-          }
+          const audio = quackAudioRef.current
+          audio.muted = true
+          audio.currentTime = 0
+          await audio.play()
+          audio.pause()
+          audio.currentTime = 0
+          audio.muted = false
         } catch (e) {
-          console.warn('HTML5 Audio unlock failed:', e)
+          // Unlock failed, but continue
         }
       }
 
+      // Also set up Web Audio API for munch sounds
       const AudioContext = window.AudioContext || window.webkitAudioContext
-      if (!AudioContext) {
-        unlockedRef.current = true
-        return
+      if (AudioContext) {
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContext()
+        }
+
+        if (audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+
+        munchBufferRef.current = generateMunchSound(audioContextRef.current)
       }
 
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext()
-      }
-
-      // Resume audio context (required for iOS)
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume()
-      }
-
-      // Play a silent sound to unlock audio on iOS
-      // This is required for iOS Safari to allow audio playback
-      try {
-        const buffer = audioContextRef.current.createBuffer(1, 1, 22050)
-        const source = audioContextRef.current.createBufferSource()
-        source.buffer = buffer
-        source.connect(audioContextRef.current.destination)
-        source.start(0)
-      } catch (e) {
-        // Silent unlock might fail, that's okay
-      }
-
-      munchBufferRef.current = generateMunchSound(audioContextRef.current)
       unlockedRef.current = true
     } catch (e) {
-      console.warn('Audio context creation failed:', e)
       unlockedRef.current = true // Mark as unlocked even if it failed
     }
   }, [])
@@ -132,73 +116,20 @@ export function useAudio() {
 
     try {
       if (soundType === 'quack') {
-        // For mobile, always use HTML5 Audio as it's more reliable
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        // Simple approach: just use the HTML5 Audio element
+        if (quackAudioRef.current) {
+          const audio = quackAudioRef.current
 
-        if (isMobile) {
-          // On mobile, create a fresh Audio element each time
+          // Stop current playback if any
+          audio.pause()
+          audio.currentTime = 0
+
+          // Play the sound
           try {
-            // Create a completely new Audio element for each play
-            const audio = new Audio('/quack.mp3')
-            audio.volume = 1.0
-
-            // Clean up the audio element after it finishes playing
-            audio.addEventListener('ended', () => {
-              audio.remove()
-            })
-
-            // Also clean up on error
-            audio.addEventListener('error', () => {
-              audio.remove()
-            })
-
-            const playPromise = audio.play()
-            if (playPromise !== undefined) {
-              await playPromise
-            }
-            return
-          } catch (e) {
-            console.warn('HTML5 Audio playback failed:', e)
-            // Fall through to Web Audio API
+            await audio.play()
+          } catch (err) {
+            // Ignore play errors - they happen sometimes on mobile
           }
-        } else {
-          // On desktop, try Web Audio API first
-          if (audioContextRef.current && quackBufferRef.current) {
-            try {
-              // Ensure audio context is resumed (required for iOS)
-              if (audioContextRef.current.state === 'suspended') {
-                await audioContextRef.current.resume()
-              }
-
-              const source = audioContextRef.current.createBufferSource()
-              source.buffer = quackBufferRef.current
-              source.connect(audioContextRef.current.destination)
-              source.start(0)
-              return
-            } catch (e) {
-              console.warn('Web Audio API failed, falling back to HTML5:', e)
-            }
-          }
-        }
-
-        // Fallback: HTML5 Audio (works on both mobile and desktop)
-        // Create a fresh Audio element for each play
-        const audio = new Audio('/quack.mp3')
-        audio.volume = 1.0
-
-        // Clean up the audio element after it finishes playing
-        audio.addEventListener('ended', () => {
-          audio.remove()
-        })
-
-        // Also clean up on error
-        audio.addEventListener('error', () => {
-          audio.remove()
-        })
-
-        const playPromise = audio.play()
-        if (playPromise !== undefined) {
-          await playPromise
         }
       } else if (soundType === 'munch') {
         if (!audioContextRef.current || !munchBufferRef.current) return
