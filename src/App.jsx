@@ -41,31 +41,15 @@ function App() {
   // Handle start button click
   const handleStart = useCallback(async () => {
     // Unlock audio immediately in this click handler
-    const success = await unlockAudio()
+    await unlockAudio()
 
-    // Reset spawn timer so food starts falling immediately
-    lastSpawnRef.current = Date.now() - (SPAWN_INTERVAL * 2)
-
-    // Spawn initial food immediately
-    const initialFood = []
-    for (let i = 0; i < 2; i++) {
-      const type = FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)]
-      initialFood.push({
-        id: foodIdRef.current++,
-        type,
-        x: Math.random() * 80 + 10,
-        y: -10 - (i * 20),
-        velocity: FALL_SPEED,
-        state: 'falling',
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 2,
-      })
-    }
-    setFoodItems(initialFood)
-
-    // Mark game as started
+    // Mark game as started FIRST
     gameStartedRef.current = true
-    // Hide start screen to start the game
+
+    // Reset spawn timer to force immediate spawn
+    lastSpawnRef.current = 0
+
+    // Hide start screen
     setShowStartScreen(false)
   }, [unlockAudio])
 

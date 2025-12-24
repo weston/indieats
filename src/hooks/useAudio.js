@@ -127,21 +127,27 @@ export function useAudio() {
 
     try {
       if (soundType === 'quack') {
-        // Simple approach: just use the HTML5 Audio element
-        if (quackAudioRef.current) {
-          const audio = quackAudioRef.current
+        // Use Web Audio API - more reliable after unlock
+        if (audioContextRef.current && quackBufferRef.current) {
+          // Resume context if suspended
+          if (audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume()
+          }
 
-          // Stop current playback if any
+          // Create new buffer source (they're single-use)
+          const source = audioContextRef.current.createBufferSource()
+          source.buffer = quackBufferRef.current
+          source.connect(audioContextRef.current.destination)
+          source.start(0)
+        } else if (quackAudioRef.current) {
+          // Fallback to HTML5 Audio if Web Audio not available
+          const audio = quackAudioRef.current
           audio.pause()
           audio.currentTime = 0
           audio.volume = 1.0
-
-          // Play the sound
           const playPromise = audio.play()
           if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              // Silently handle play failures
-            })
+            playPromise.catch(() => {})
           }
         }
       } else if (soundType === 'munch') {
