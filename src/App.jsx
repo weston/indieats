@@ -17,7 +17,7 @@ const FOOD_TYPES = [
 
 const MAX_FOOD_ITEMS = 8
 const SPAWN_INTERVAL = 2000 // 2 seconds
-const FALL_SPEED = 0.5 // vh per frame
+const FALL_SPEED = 0.25 // vh per frame (half speed)
 const ANTICIPATION_RADIUS = 12 // vh
 const EAT_RADIUS = 8 // vh
 
@@ -38,35 +38,12 @@ function App() {
   // Handle food eaten (called from game loop, food already removed from array)
   const handleEatFood = useCallback((foodId) => {
     // Don't remove food here - it's already removed in the game loop
-    setOstrichState('happy')
-    ostrichStateRef.current = 'happy'
     playSound('quack')
     
-      // Add sparkles
-      if (!reducedMotion) {
-        const sparkleCount = 8
-        const sparkleBaseId = Date.now()
-        const newSparkles = Array.from({ length: sparkleCount }, (_, i) => ({
-          id: `${sparkleBaseId}-${i}-${Math.random()}`, // More unique IDs
-          x: mouthPositionRef.current.x,
-          y: mouthPositionRef.current.y,
-          angle: (i / sparkleCount) * Math.PI * 2,
-          distance: 0,
-        }))
-        setSparkles(prev => [...prev, ...newSparkles])
-        
-        // Remove sparkles after animation
-        setTimeout(() => {
-          setSparkles(prev => prev.filter(s => !newSparkles.some(ns => ns.id === s.id)))
-        }, 1000)
-      }
-    
-    // Return to idle after happy animation
-    setTimeout(() => {
-      setOstrichState('idle')
-      ostrichStateRef.current = 'idle'
-    }, 1500)
-  }, [playSound, reducedMotion])
+    // Close mouth immediately when food disappears
+    setOstrichState('idle')
+    ostrichStateRef.current = 'idle'
+  }, [playSound])
 
   // Store ref to handleEatFood for game loop
   useEffect(() => {
@@ -110,20 +87,16 @@ function App() {
           }
         }
 
-        // Check mouth proximity for dragging food
-        // Only auto-eat if food is very close (smaller radius than handleDragEnd)
-        // This prevents conflicts with handleDragEnd
-        if (food.state === 'dragging' && mouthPositionRef.current.x > 0 && !foodsToEat.includes(food.id)) {
+        // Check mouth proximity for dragging food - only for anticipation, not auto-eat
+        // Food is only eaten when released near mouth (via handleDragEnd)
+        if (food.state === 'dragging' && mouthPositionRef.current.x > 0) {
           const dx = food.x - mouthPositionRef.current.x
           const dy = food.y - mouthPositionRef.current.y
           const distance = Math.sqrt(dx * dx + dy * dy)
 
           if (distance < ANTICIPATION_RADIUS) {
             hasNearbyFood = true
-            // Only auto-eat if very close (smaller than handleDragEnd's threshold)
-            if (distance < EAT_RADIUS * 0.8) {
-              foodsToEat.push(food.id)
-            }
+            // Don't auto-eat - only eat on release via handleDragEnd
           }
         }
 
@@ -231,18 +204,18 @@ function App() {
     ))
   }, [])
 
-  // Handle food drag end
+  // Handle food drag end - food disappears and mouth closes when released near ostrich
   const handleDragEnd = useCallback((foodId, x, y) => {
-    setFoodItems(prev => {
-      const food = prev.find(f => f.id === foodId)
-      if (!food) return prev // Food already removed
-      
-      const dx = x - mouthPositionRef.current.x
-      const dy = y - mouthPositionRef.current.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
+    const dx = x - mouthPositionRef.current.x
+    const dy = y - mouthPositionRef.current.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
 
-      if (distance < EAT_RADIUS * 1.5) {
-        // Close enough to eat - remove immediately and trigger effects
+    if (distance < EAT_RADIUS * 1.5) {
+      // Close enough to eat - remove food and close mouth when released
+      setFoodItems(prev => {
+        const food = prev.find(f => f.id === foodId)
+        if (!food) return prev // Food already removed
+        
         const updated = prev.filter(f => f.id !== foodId)
         
         // Reset spawn timer to allow immediate spawning of new food
@@ -267,22 +240,29 @@ function App() {
           return [...updated, newFood]
         }
         
-        // Trigger effects after state update
-        setTimeout(() => {
-          handleEatFood(foodId)
-        }, 0)
-        
         return updated
-      } else {
-        // Drop it gently - update its state to falling
+      })
+      
+      // Close mouth immediately when food is released near ostrich
+      setOstrichState('idle')
+      ostrichStateRef.current = 'idle'
+      
+      // Trigger effects (sound, sparkles)
+      handleEatFood(foodId)
+    } else {
+      // Not close enough - drop it gently
+      setFoodItems(prev => {
+        const food = prev.find(f => f.id === foodId)
+        if (!food) return prev
+        
         return prev.map(f =>
           f.id === foodId ? { ...f, state: 'falling', dragging: false, velocity: FALL_SPEED } : f
         )
-      }
-    })
-    
-    // Update ostrich state outside of setFoodItems to avoid batching issues
-    setOstrichState(prev => prev === 'anticipation' ? 'idle' : prev)
+      })
+      
+      // Update ostrich state outside of setFoodItems to avoid batching issues
+      setOstrichState(prev => prev === 'anticipation' ? 'idle' : prev)
+    }
   }, [handleEatFood])
 
   return (

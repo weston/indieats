@@ -5,6 +5,7 @@ function FoodItem({ food, onDragStart, onDrag, onDragEnd }) {
   const itemRef = useRef(null)
   const isDraggingRef = useRef(false)
   const pointerIdRef = useRef(null)
+  const offsetRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     const element = itemRef.current
@@ -16,6 +17,19 @@ function FoodItem({ food, onDragStart, onDrag, onDragEnd }) {
       isDraggingRef.current = true
       pointerIdRef.current = e.pointerId
       element.setPointerCapture(e.pointerId)
+      
+      // Calculate offset based on food's stored position (food.x, food.y)
+      // This ensures consistency with how positions are stored
+      const clickXvw = (e.clientX / window.innerWidth) * 100
+      const clickYvh = (e.clientY / window.innerHeight) * 100
+      
+      // Offset is the difference between click position and food's stored position
+      // This maintains the relative position when dragging
+      offsetRef.current = {
+        x: clickXvw - food.x,
+        y: clickYvh - food.y
+      }
+      
       onDragStart(food.id)
     }
 
@@ -23,9 +37,9 @@ function FoodItem({ food, onDragStart, onDrag, onDragEnd }) {
       if (!isDraggingRef.current || pointerIdRef.current !== e.pointerId) return
       e.preventDefault()
       
-      // Use viewport coordinates directly (vw/vh)
-      const x = (e.clientX / window.innerWidth) * 100
-      const y = (e.clientY / window.innerHeight) * 100
+      // Use viewport coordinates directly (vw/vh) and apply offset
+      const x = (e.clientX / window.innerWidth) * 100 - offsetRef.current.x
+      const y = (e.clientY / window.innerHeight) * 100 - offsetRef.current.y
       
       onDrag(food.id, x, y)
     }
@@ -40,9 +54,12 @@ function FoodItem({ food, onDragStart, onDrag, onDragEnd }) {
         pointerIdRef.current = null
       }
       
-      // Use viewport coordinates directly (vw/vh)
-      const x = (e.clientX / window.innerWidth) * 100
-      const y = (e.clientY / window.innerHeight) * 100
+      // Use viewport coordinates directly (vw/vh) and apply offset
+      const x = (e.clientX / window.innerWidth) * 100 - offsetRef.current.x
+      const y = (e.clientY / window.innerHeight) * 100 - offsetRef.current.y
+      
+      // Reset offset
+      offsetRef.current = { x: 0, y: 0 }
       
       onDragEnd(food.id, x, y)
     }
@@ -52,6 +69,8 @@ function FoodItem({ food, onDragStart, onDrag, onDragEnd }) {
         isDraggingRef.current = false
         element.releasePointerCapture(e.pointerId)
         pointerIdRef.current = null
+        // Reset offset
+        offsetRef.current = { x: 0, y: 0 }
         // Resume falling if cancelled
         onDragEnd(food.id, food.x, food.y)
       }
